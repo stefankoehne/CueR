@@ -1,35 +1,33 @@
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { QRMode } from '@prisma/client';
-import EditForm from './form';
+import QRForm from '@/components/QRForm';
 
-interface EditPageProps {
-  params: { shortCode: string };
-}
+export default async function EditQRPage({ params }: { params: { shortCode: string } }) {
+  const session = await auth();
 
-export default async function EditPage({ params }: EditPageProps) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session || session.user.role !== 'ADMIN') {
     redirect('/login');
   }
 
-  const code = await prisma.qRCode.findUnique({
+  const qrCode = await prisma.qrCode.findUnique({
     where: { shortCode: params.shortCode },
   });
 
-  if (!code) {
-    return <div className="p-6 text-red-400">QR-Code nicht gefunden.</div>;
+  if (!qrCode) {
+    notFound();
   }
 
   return (
-    <div className="max-w-xl mx-auto p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">QR-Code bearbeiten</h1>
-      <EditForm
-        shortCode={code.shortCode}
-        initialUrl={code.targetUrl}
-        initialMode={code.mode}
+    <div className="max-w-xl mx-auto py-8">
+      <h1 className="text-2xl font-semibold mb-6">QR-Code bearbeiten</h1>
+      <QRForm
+        action={`/api/code/${qrCode.shortCode}`}
+        method="PUT"
+        defaultUrl={qrCode.targetUrl}
+        defaultMode={qrCode.mode}
+        submitLabel="Änderungen speichern"
+        successRedirect="/dashboard"
       />
     </div>
   );
