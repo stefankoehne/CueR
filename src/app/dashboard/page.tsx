@@ -1,47 +1,53 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { db } from '@/lib/db';
+import prisma from '@/lib/prisma';
 import Link from 'next/link';
+import { DeleteButton } from './DeleteButton';
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-
+  const session = await auth();
   if (!session || session.user.role !== 'ADMIN') {
     redirect('/login');
   }
 
-  const codes = await db.qrCode.findMany({
-    where: { userId: session.user.id },
+  const codes = await prisma.qRCode.findMany({
     orderBy: { createdAt: 'desc' },
   });
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-2xl font-bold mb-4">Willkommen, {session.user.name}</h1>
-      <Link
-        href="/dashboard/create"
-        className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mb-4"
-      >
-        ➕ Neuen QR-Code erstellen
-      </Link>
-
-      <div className="space-y-4">
-        {codes.map((code) => (
-          <div key={code.id} className="p-4 bg-gray-800 rounded shadow flex justify-between items-center">
-            <div>
-              <p className="font-bold">Code: /code={code.code}</p>
-              <p className="text-sm text-gray-300 break-all">Ziel: {code.targetUrl}</p>
-            </div>
-            <Link
-              href={`/dashboard/edit/${code.id}`}
-              className="text-sm text-blue-400 hover:underline"
-            >
-              ✏️ Bearbeiten
-            </Link>
-          </div>
-        ))}
+    <main className="max-w-4xl mx-auto py-10 px-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <Link
+          href="/dashboard/create"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        >
+          Neuen QR-Code erstellen
+        </Link>
       </div>
-    </div>
+
+      <table className="w-full table-auto text-sm text-left text-gray-300">
+        <thead className="bg-gray-700 text-xs uppercase">
+          <tr>
+            <th className="px-4 py-2">Shortcode</th>
+            <th className="px-4 py-2">Ziel-URL</th>
+            <th className="px-4 py-2">Modus</th>
+            <th className="px-4 py-2">Aktion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {codes.map((code) => (
+            <tr key={code.shortCode} className="border-b border-gray-700">
+              <td className="px-4 py-2 font-mono">{code.shortCode}</td>
+              <td className="px-4 py-2 break-all">{code.targetUrl}</td>
+              <td className="px-4 py-2">{code.mode}</td>
+              <td className="px-4 py-2">
+                <DeleteButton shortCode={code.shortCode} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </main>
   );
 }
