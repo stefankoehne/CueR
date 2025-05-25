@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  password       String
+  emailVerified  DateTime?
+  role           Role     @default(STANDARD)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  codes          QRCode[]
+}
+
+model QRCode {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  target         String
+  mode           QRMode
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  expiresAt      DateTime?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  STANDARD
+  PRO
+  ADMIN
+}
+
+enum QRMode {
+  REDIRECT
+  EMBED
+}

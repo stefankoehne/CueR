@@ -1,63 +1,72 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setLoading(true);
 
-    const res = await signIn('credentials', {
-      redirect: false,
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    const result = await signIn('credentials', {
       email,
       password,
+      redirect: true,
+      callbackUrl: '/dashboard',
     });
 
-    if (res?.error) {
-      setError('Login fehlgeschlagen. Bitte prüfen Sie Ihre Eingaben.');
-    } else {
-      router.push('/dashboard');
-    }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-gray-800 p-8 rounded shadow-md w-full max-w-sm space-y-4"
-      >
-        <h1 className="text-xl font-bold mb-4 text-center">CueR Admin Login</h1>
-        <input
-          type="email"
-          placeholder="E-Mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full p-2 rounded bg-gray-700 text-white"
-        />
-        <input
-          type="password"
-          placeholder="Passwort"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full p-2 rounded bg-gray-700 text-white"
-        />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+    <main className="max-w-md mx-auto mt-10 p-4">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="block mb-1">E-Mail</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            required
+            className="w-full border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="block mb-1">Passwort</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            required
+            className="w-full border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+        {error && <p className="text-red-500">Login fehlgeschlagen. Bitte prüfen Sie Ihre Zugangsdaten.</p>}
         <button
           type="submit"
-          className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold"
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Login
+          {loading ? 'Wird geladen...' : 'Einloggen'}
         </button>
       </form>
-    </div>
+      <p className="mt-4 text-sm">
+        Noch kein Account?{' '}
+        <Link href="/register" className="text-blue-600 hover:underline">
+          Jetzt registrieren
+        </Link>
+      </p>
+    </main>
   );
 }
