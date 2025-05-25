@@ -1,3 +1,4 @@
+// src/app/code/[slug]/edit/page.tsx
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -24,7 +25,7 @@ export default async function EditPage({ params }: EditPageProps) {
   return (
     <main className="max-w-xl mx-auto mt-10 p-4">
       <h1 className="text-2xl font-bold mb-4">QR-Code bearbeiten</h1>
-      <EditQrForm initialData={qrCode} />
+      <EditQrForm qrCode={qrCode} /> {/* ✅ Hier: qrCode statt initialData */}
     </main>
   );
 }

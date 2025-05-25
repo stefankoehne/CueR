@@ -18,11 +18,13 @@ export default async function CodePage({ params }: PageProps) {
 
   if (qrCode.mode === 'EMBED') {
     return (
-      <iframe
-        src={qrCode.targetUrl}
-        className="w-full h-screen border-none"
-        title="Embedded content"
-      />
+      <div className="w-screen h-screen flex items-center justify-center">
+        <iframe
+          src={qrCode.targetUrl}
+          className="w-full h-full border-none"
+          title="Embedded content"
+        />
+      </div>
     );
   }
 
